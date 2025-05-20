@@ -4,95 +4,53 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                echo "Stage: Build"
                 echo "Fetch the source code from ${env.DIRECTORY_PATH}"
-                echo "Compile the code and generate any necessary artifacts"
-                echo "Use Maven for automation"
+                echo "Compile the code and generate necessary artifacts"
+                echo "Tool: Maven"
             }
         }
 
         stage('Unit and Integration Tests') {
             steps {
-                echo "Unit tests"
-                echo "Integration tests"
-                echo "JUnit (Unit Tests) and Postman (Integration Tests)"
-            }
-            post {
-                success {
-                    emailext(
-                        body: '''Unit and Integration Tests have passed successfully.
-Attached are the test logs.''',
-                        to: 'aditiagarwall1603@gmail.com',
-                        subject: "Unit and Integration Tests Successful",
-                        attachmentsPattern: 'test.log',
-                        attachLog: true
-                    )
-                }
-                failure {
-                    emailext(
-                        body: '''Unit and Integration Tests have failed.
-Attached are the test logs.''',
-                        to: 'aditiagarwall1603@gmail.com',
-                        subject: "Unit and Integration Tests Failed",
-                        attachmentsPattern: 'test.log',
-                        attachLog: true
-                    )
-                }
+                echo "Stage: Unit and Integration Tests"
+                echo "Run unit tests using JUnit"
+                echo "Run integration tests using Postman"
             }
         }
 
         stage('Code Analysis') {
             steps {
-                echo "Integration tests"
-                echo "SonarQube Scanner for Jenkins plugin"
+                echo "Stage: Code Analysis"
+                echo "Analyze code using SonarQube Scanner"
             }
         }
 
         stage('Security Scan') {
             steps {
-                echo "Perform scan to find vulnerabilities"
-                echo "OWASP Dependency-Check plugin"
-            }
-            post {
-                success {
-                    emailext(
-                        body: '''Security Scan has completed successfully.
-Attached are the test logs.''',
-                        to: 'aditiagarwall1603@gmail.com',
-                        subject: "Security Scan Successful",
-                        attachmentsPattern: 'test.log',
-                        attachLog: true
-                    )
-                }
-                failure {
-                    emailext(
-                        body: '''Security Scan has failed.''',
-                        to: 'aditiagarwall1603@gmail.com',
-                        subject: "Security Scan Failed",
-                        attachmentsPattern: 'test.log',
-                        attachLog: true
-                    )
-                }
+                echo "Stage: Security Scan"
+                echo "Perform security scan using OWASP Dependency-Check"
             }
         }
 
         stage('Deploy to Staging') {
             steps {
-                echo "Deploy application to staging server"
-                echo "Use tool such as AWS"
+                echo "Stage: Deploy to Staging"
+                echo "Deploy application to staging server using AWS EC2"
             }
         }
 
         stage('Integration Tests on Staging') {
             steps {
-                echo "Run integration tests"
-                echo "Use tool such as JUnit"
+                echo "Stage: Integration Tests on Staging"
+                echo "Run integration tests using JUnit on the staging environment"
             }
         }
 
         stage('Deploy to Production') {
             steps {
-                echo "Deploy application"
-                echo "Use AWS"
+                echo "Stage: Deploy to Production"
+                echo "Deploy application to production server using AWS EC2"
             }
         }
     }
