@@ -1,92 +1,88 @@
 pipeline {
     agent any
     
-    tools {
-        maven 'Maven'  // This should match the Maven tool name configured in Jenkins
+    triggers {
+        pollSCM('H/5 * * * *') // Checks GitHub every 5 minutes
     }
     
-    environment {
-        JAVA_HOME = sh(script: 'which java | xargs readlink -f | sed "s:/bin/java::"', returnStdout: true).trim()
+    tools {
+        maven 'Maven_3.9.9' // Pre-configured in Jenkins
+        jdk 'JDK_11' 
     }
     
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-        
+        // Stage 1: Build
         stage('Build') {
             steps {
-                echo 'Building the application using Maven'
-                sh 'mvn --version'
+                echo 'Compiling source code with Maven'
                 sh 'mvn clean package'
             }
         }
         
-        stage('Unit and Integration Tests') {
+        // Stage 2: Unit and Integration Tests
+        stage('Tests') {
             steps {
-                echo 'Running unit and integration tests'
+                echo 'Running JUnit tests'
                 sh 'mvn test'
+                
+                echo 'Running TestNG integration tests'
+                sh 'mvn verify -DskipUnitTests=true'
+            }
+            
+            post {
+                always {
+                    junit '**/target/surefire-reports/*.xml' // Publish test reports
+                }
             }
         }
         
+        // Stage 3: Code Analysis
         stage('Code Analysis') {
             steps {
-                echo 'Running code analysis'
-                // Add your code analysis commands here
+                echo 'Running SonarQube scan'
+                withSonarQubeEnv('SonarQube-Server') {
+                    sh 'mvn sonar:sonar'
+                }
             }
         }
         
+        // Stage 4: Security Scan
         stage('Security Scan') {
             steps {
-                echo 'Performing security scan'
-                // Add your security scan commands here
+                echo 'Checking vulnerabilities with OWASP'
+                sh 'mvn org.owasp:dependency-check:maven'
             }
         }
         
-        stage('Deploy to Staging') {
+        // Stage 5: Deploy to Staging
+        stage('Deploy Staging') {
             steps {
-                echo 'Deploying to staging environment'
-                // Add deployment commands here
+                echo 'Deploying to AWS EC2 staging'
+                sh 'aws deploy create-deployment --application-name MyApp --deployment-group-name Staging --s3-location bucket=my-bucket,key=app.war,bundleType=zip'
             }
         }
         
-        stage('Integration Tests on Staging') {
+        // Stage 6: Staging Tests
+        stage('Staging Tests') {
             steps {
-                echo 'Running integration tests on staging'
-                // Add staging integration test commands here
+                echo 'Running Selenium tests on staging'
+                sh 'mvn test -Pselenium-staging'
             }
         }
         
-        stage('Deploy to Production') {
+        // Stage 7: Deploy Production
+        stage('Deploy Production') {
             steps {
-                echo 'Deploying to production'
-                // Add production deployment commands here
+                echo 'Releasing to AWS EC2 production'
+                sh 'aws deploy create-deployment --application-name MyApp --deployment-group-name Production --s3-location bucket=my-bucket,key=app.war,bundleType=zip'
             }
         }
     }
     
     post {
         always {
-            echo 'Pipeline completed - cleaning up'
+            echo 'Pipeline completed. Cleaning workspace...'
             cleanWs()
-        }
-        failure {
-            echo 'Pipeline failed!'
-            emailext(
-                subject: 'Pipeline Failed: ${currentBuild.fullDisplayName}',
-                body: 'The pipeline has failed. Please check the console output for details.',
-                to: 'team@example.com'
-            )
-        }
-        success {
-            echo 'Pipeline succeeded!'
-            emailext(
-                subject: 'Pipeline Succeeded: ${currentBuild.fullDisplayName}',
-                body: 'The pipeline has completed successfully.',
-                to: 'team@example.com'
-            )
         }
     }
 }
