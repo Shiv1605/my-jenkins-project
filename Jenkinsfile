@@ -3,7 +3,10 @@ pipeline {
     
     tools {
         maven 'Maven'  // This should match the Maven tool name configured in Jenkins
-        jdk 'JDK'      // Add this line to specify the JDK tool configured in Jenkins
+    }
+    
+    environment {
+        JAVA_HOME = sh(script: 'which java | xargs readlink -f | sed "s:/bin/java::"', returnStdout: true).trim()
     }
     
     stages {
