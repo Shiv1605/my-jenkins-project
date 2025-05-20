@@ -1,11 +1,27 @@
 pipeline {
     agent any
     
+    tools {
+        // Configure Maven installation (must match the name in Jenkins Global Tool Configuration)
+        maven 'Maven'
+    }
+    
+    options {
+        // Ensure we use 'main' branch instead of 'master'
+        gitBranch('main')
+    }
+    
+    environment {
+        // Optional: Set any environment variables needed
+        JAVA_HOME = '/usr/lib/jvm/default-java' // Adjust path as needed
+    }
+    
     stages {
         // Stage 1: Build
         stage('Build') {
             steps {
                 echo 'Building the application using Maven'
+                sh 'mvn --version' // Verify Maven is available
                 sh 'mvn clean package'
             }
         }
@@ -39,8 +55,11 @@ pipeline {
         stage('Deploy to Staging') {
             steps {
                 echo 'Deploying to AWS EC2 staging server'
-                sh 'scp target/*.jar user@staging-server:/path/to/deploy'
-                sh 'ssh user@staging-server "systemctl restart myapp"'
+                script {
+                    // Example deployment command - replace with your actual deployment
+                    sh 'scp target/*.jar user@staging-server:/path/to/deploy'
+                    sh 'ssh user@staging-server "systemctl restart myapp"'
+                }
             }
         }
         
@@ -48,7 +67,10 @@ pipeline {
         stage('Integration Tests on Staging') {
             steps {
                 echo 'Running integration tests on staging environment with Selenium'
-                sh 'mvn test -Dtest=StagingIntegrationTests'
+                script {
+                    // Example test command - adjust as needed
+                    sh 'mvn test -Dtest=StagingIntegrationTests'
+                }
             }
         }
         
@@ -56,9 +78,28 @@ pipeline {
         stage('Deploy to Production') {
             steps {
                 echo 'Deploying to AWS EC2 production server'
-                sh 'scp target/*.jar user@production-server:/path/to/deploy'
-                sh 'ssh user@production-server "systemctl restart myapp"'
+                script {
+                    // Example deployment command - replace with your actual deployment
+                    sh 'scp target/*.jar user@production-server:/path/to/deploy'
+                    sh 'ssh user@production-server "systemctl restart myapp"'
+                }
             }
+        }
+    }
+    
+    post {
+        // Optional post-build actions
+        always {
+            echo 'Pipeline completed - cleaning up'
+            cleanWs() // Clean workspace
+        }
+        success {
+            echo 'Pipeline succeeded!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+            // Optional: Send notification
+            emailext body: 'Pipeline failed!', subject: 'Pipeline Failed', to: 'team@example.com'
         }
     }
 }
