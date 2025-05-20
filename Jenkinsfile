@@ -6,7 +6,7 @@ pipeline {
     }
     
     tools {
-        maven 'Maven_3.9.9' // Pre-configured in Jenkins
+        maven 'Maven' // Pre-configured in Jenkins
         jdk 'JDK_11' 
     }
     
